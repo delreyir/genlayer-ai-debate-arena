@@ -14,7 +14,7 @@ natural-language input. That judgment is exactly what GenLayer's Intelligent Con
 
 ## 🔴 Live demo
 
-- **App:** https://genlayer-ai-debate-arena-frontend.vercel.app
+- **App:** https://the-ai-debate-arena.vercel.app
 - **Contract (GenLayer Studionet):** `0x615CD14615b1AAb20273f853D0fFa3e29d9c77C3`
 
 > The hosted demo currently runs against GenLayer **Studionet** (instant, built-in faucet, real LLMs). For the persistent **Bradbury** deployment, follow [Deploy to Bradbury](#2-deploy-to-bradbury).
