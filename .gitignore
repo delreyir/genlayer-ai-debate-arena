@@ -28,3 +28,5 @@ venv/
 *.compiled.js
 package-lock.json
 
+.vercel
+.env*
