@@ -1,0 +1,18 @@
+networks:
+  default: localnet
+
+  localnet:
+    url: "http://127.0.0.1:4000/api"
+
+  studionet: {}
+
+  testnet_asimov:
+    url: "https://rpc-asimov.genlayer.com"
+
+  testnet_bradbury:
+    url: "https://rpc-bradbury.genlayer.com"
+
+paths:
+  contracts: "contracts"
+
+environment: .env
