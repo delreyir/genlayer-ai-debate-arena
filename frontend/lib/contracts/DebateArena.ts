@@ -40,6 +40,35 @@ function toDebate(id: string, raw: any): Debate {
   };
 }
 
+const SETTLED_OK = new Set(["ACCEPTED", "FINALIZED"]);
+
+/**
+ * Throw a clear, user-facing error if a write transaction did not settle into a
+ * successful state. This is what turns a silent "stuck" tx into an actionable
+ * message (e.g. when AI validators fail to reach consensus).
+ */
+function assertSettled(receipt: any, action: string): any {
+  const raw = receipt?.statusName ?? receipt?.status;
+  const status = typeof raw === "string" ? raw.toUpperCase() : "";
+  if (status && !SETTLED_OK.has(status)) {
+    if (
+      status.includes("UNDETERMINED") ||
+      status.includes("TIMEOUT") ||
+      status.includes("NO_MAJORITY") ||
+      status.includes("DISAGREE")
+    ) {
+      throw new Error(
+        `The AI validators could not reach consensus while ${action}. No funds were moved — please try again.`
+      );
+    }
+    if (status === "CANCELED") {
+      throw new Error(`The transaction was canceled while ${action}.`);
+    }
+    throw new Error(`The transaction did not complete (status: ${status}) while ${action}.`);
+  }
+  return receipt;
+}
+
 /**
  * Client wrapper for the AI Debate Arena Intelligent Contract.
  */
@@ -109,6 +138,7 @@ class DebateArena {
     functionName: string,
     args: unknown[],
     value: bigint,
+    action: string,
     level: FeePresetLevel = "standard"
   ): Promise<TransactionReceipt> {
     let feePreset: FeePresetEstimate | undefined;
@@ -137,7 +167,7 @@ class DebateArena {
       retries: 30,
       interval: 5000,
     });
-    return receipt as TransactionReceipt;
+    return assertSettled(receipt, action) as TransactionReceipt;
   }
 
   createDebate(
@@ -146,7 +176,7 @@ class DebateArena {
     argument: string,
     stakeWei: bigint = BigInt(0)
   ): Promise<TransactionReceipt> {
-    return this.write("create_debate", [topic, stance, argument], stakeWei);
+    return this.write("create_debate", [topic, stance, argument], stakeWei, "creating the debate");
   }
 
   joinDebate(
@@ -154,11 +184,11 @@ class DebateArena {
     argument: string,
     stakeWei: bigint = BigInt(0)
   ): Promise<TransactionReceipt> {
-    return this.write("join_debate", [debateId, argument], stakeWei);
+    return this.write("join_debate", [debateId, argument], stakeWei, "joining the debate");
   }
 
   judgeDebate(debateId: string): Promise<TransactionReceipt> {
-    return this.write("judge_debate", [debateId], BigInt(0));
+    return this.write("judge_debate", [debateId], BigInt(0), "judging the debate");
   }
 }
 

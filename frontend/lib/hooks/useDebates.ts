@@ -9,6 +9,24 @@ import { useWallet } from "../genlayer/wallet";
 import { success, error, configError } from "../utils/toast";
 import type { Debate, LeaderboardEntry } from "../contracts/types";
 
+/** Map a raw wallet/RPC/consensus error into a clear, actionable message. */
+function describeError(err: any, fallback: string): string {
+  const msg = (err?.shortMessage || err?.message || "").toString();
+  const low = msg.toLowerCase();
+  if (low.includes("consensus")) return msg; // already user-facing (from assertSettled)
+  if (err?.code === 4001 || low.includes("user rejected") || low.includes("denied"))
+    return "Transaction cancelled in your wallet.";
+  if (low.includes("nonce"))
+    return "Your wallet nonce is out of sync. In MetaMask: Settings → Advanced → Clear activity tab data, then retry.";
+  if (low.includes("insufficient") || low.includes("funds") || low.includes("balance"))
+    return "Not enough GEN to cover the stake and gas. Fund your wallet and try again.";
+  if (low.includes("timeout") || low.includes("timed out"))
+    return "Timed out waiting for the network. The transaction may still settle — refresh in a moment.";
+  if (low.includes("not valid json") || low.includes("doctype") || low.includes("<!doctype"))
+    return "Network/RPC error talking to GenLayer. Check the RPC endpoint and retry.";
+  return msg || fallback;
+}
+
 export function useDebateArenaContract(): DebateArena | null {
   const { address } = useWallet();
   const contractAddress = getContractAddress();
@@ -93,7 +111,7 @@ export function useCreateDebate() {
       success("Debate created!", { description: "Your debate is open for a challenger." });
     },
     onError: (err: any) =>
-      error("Failed to create debate", { description: err?.message || "Please try again." }),
+      error("Failed to create debate", { description: describeError(err, "Please try again.") }),
   });
 
   return { ...mutation, createDebate: mutation.mutate, createDebateAsync: mutation.mutateAsync };
@@ -124,7 +142,7 @@ export function useJoinDebate() {
       success("Joined debate!", { description: "Both arguments are in — time to judge." });
     },
     onError: (err: any) =>
-      error("Failed to join debate", { description: err?.message || "Please try again." }),
+      error("Failed to join debate", { description: describeError(err, "Please try again.") }),
   });
 
   return { ...mutation, joinDebate: mutation.mutate, joinDebateAsync: mutation.mutateAsync };
@@ -148,7 +166,7 @@ export function useJudgeDebate() {
       });
     },
     onError: (err: any) =>
-      error("Failed to judge debate", { description: err?.message || "Please try again." }),
+      error("Couldn't reach a verdict", { description: describeError(err, "Please try again.") }),
   });
 
   return { ...mutation, judgeDebate: mutation.mutate, judgeDebateAsync: mutation.mutateAsync };

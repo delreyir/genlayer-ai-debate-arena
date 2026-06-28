@@ -15,7 +15,7 @@ natural-language input. That judgment is exactly what GenLayer's Intelligent Con
 ## 🔴 Live demo
 
 - **App:** https://genlayer-ai-debate-arena-frontend.vercel.app
-- **Contract (GenLayer Studionet):** `0x2a7E3d047fBeC5D4DE75665464A4fEcCF66b2453`
+- **Contract (GenLayer Studionet):** `0x615CD14615b1AAb20273f853D0fFa3e29d9c77C3`
 
 > The hosted demo currently runs against GenLayer **Studionet** (instant, built-in faucet, real LLMs). For the persistent **Bradbury** deployment, follow [Deploy to Bradbury](#2-deploy-to-bradbury).
 
@@ -27,13 +27,20 @@ The core of the app — deciding who won a debate — is a non-deterministic, su
 contract*:
 
 ```python
-verdict_json = gl.eq_principle.prompt_comparative(
-    judge_fn,                       # each validator runs an LLM to score both arguments
-    principle="The 'winner' field must be identical ...",
-)
+def leader_fn():
+    raw = gl.nondet.exec_prompt(prompt, response_format="json")
+    return normalize(raw)        # coerce winner -> 0/1/2, clamp scores 0-100
+
+def validator_fn(leader_result):
+    # consensus on the WINNER only — robust to differing scores/wording
+    return my_winner == leader_result.calldata["winner"]
+
+verdict = gl.vm.run_nondet(leader_fn, validator_fn)
 ```
 
-Validators may phrase their reasoning differently, but consensus requires them to **agree on the declared winner**.
+Each validator independently runs an LLM, **normalizes (sanitizes) the output**, and consensus only requires
+agreement on the **declared winner** (one of three values) — not the free-text reasoning. This is what keeps
+validators from endlessly disagreeing on unstructured text.
 Remove GenLayer and there is no app — there is no other way to put an impartial, AI-driven verdict on-chain without a
 trusted third party.
 
@@ -151,7 +158,7 @@ Connect MetaMask (it will prompt to add the GenLayer Bradbury network), then cre
 ## Verification status
 
 - ✅ `genvm-lint` passes (0 warnings) — `DebateArena`, 7 methods (4 view, 3 write).
-- ✅ `pytest tests/direct/` — 16 tests passing (create / join / judge / leaderboard / reverts, LLM mocked).
+- ✅ `pytest tests/direct/` — 19 tests passing (create / join / judge / leaderboard / reverts, plus consensus-robustness tests: validators agree on the winner despite differing scores/wording, and out-of-range scores are sanitized).
 - ✅ Frontend `tsc --noEmit` and `next build` pass.
 - ⏳ On-chain value-transfer payout is exercised on a live network (Bradbury); direct tests cover the judging logic with
   zero-stake debates.

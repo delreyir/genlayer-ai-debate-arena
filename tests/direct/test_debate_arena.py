@@ -219,3 +219,51 @@ def test_get_missing_debate_fails(direct_vm, direct_deploy):
     contract = direct_deploy(CONTRACT)
     with direct_vm.expect_revert("Debate not found"):
         contract.get_debate("404")
+
+
+
+# --------------------------------------------------------------------------- #
+# consensus robustness (validator agreement is winner-only)                   #
+# --------------------------------------------------------------------------- #
+
+
+def test_validator_agrees_when_winner_matches(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """A validator whose LLM returns the same winner but DIFFERENT scores/wording
+    must still agree — consensus depends only on the normalized winner."""
+    contract = direct_deploy(CONTRACT)
+    debate_id = _open_and_join(contract, direct_vm, direct_alice, direct_bob)
+
+    _mock_verdict(direct_vm, winner=1, score_creator=80, score_opponent=40, reason="Leader view")
+    contract.judge_debate(debate_id)
+
+    # Validator sees the same winner with very different scores and wording.
+    direct_vm.clear_mocks()
+    _mock_verdict(direct_vm, winner=1, score_creator=51, score_opponent=49, reason="totally different wording")
+    assert direct_vm.run_validator() is True
+
+
+def test_validator_disagrees_when_winner_differs(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """A validator only disagrees when the declared winner itself differs."""
+    contract = direct_deploy(CONTRACT)
+    debate_id = _open_and_join(contract, direct_vm, direct_alice, direct_bob)
+
+    _mock_verdict(direct_vm, winner=1)
+    contract.judge_debate(debate_id)
+
+    direct_vm.clear_mocks()
+    _mock_verdict(direct_vm, winner=2)
+    assert direct_vm.run_validator() is False
+
+
+def test_judge_normalizes_out_of_range_scores(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Out-of-range / malformed scores from the LLM are sanitized (clamped 0-100)."""
+    contract = direct_deploy(CONTRACT)
+    debate_id = _open_and_join(contract, direct_vm, direct_alice, direct_bob)
+
+    _mock_verdict(direct_vm, winner=1, score_creator=999, score_opponent=-5)
+    contract.judge_debate(debate_id)
+
+    debate = contract.get_debate(debate_id)
+    assert debate["creator_score"] == 100
+    assert debate["opponent_score"] == 0
+    assert debate["winner"] == to_hex(direct_alice)
