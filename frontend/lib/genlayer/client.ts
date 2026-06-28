@@ -22,12 +22,19 @@ const CHAINS: Record<string, GenLayerChain> = {
   localnet: localnet as GenLayerChain,
 };
 
-const SELECTED = (process.env.NEXT_PUBLIC_GENLAYER_CHAIN || "bradbury").toLowerCase();
+// Read env vars and strip any stray whitespace/CR (e.g. introduced by CLI piping).
+const ENV_CHAIN = (process.env.NEXT_PUBLIC_GENLAYER_CHAIN || "").trim();
+const ENV_RPC = (process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || "").trim();
+const ENV_CHAIN_ID = (process.env.NEXT_PUBLIC_GENLAYER_CHAIN_ID || "").trim();
+const ENV_CHAIN_NAME = (process.env.NEXT_PUBLIC_GENLAYER_CHAIN_NAME || "").trim();
+const ENV_SYMBOL = (process.env.NEXT_PUBLIC_GENLAYER_SYMBOL || "").trim();
+
+const SELECTED = (ENV_CHAIN || "bradbury").toLowerCase();
 export const genlayerChain: GenLayerChain = CHAINS[SELECTED] ?? (testnetBradbury as GenLayerChain);
 
 // Network metadata (env overrides win, otherwise fall back to the chain object).
 export const GENLAYER_CHAIN_ID = parseInt(
-  process.env.NEXT_PUBLIC_GENLAYER_CHAIN_ID || String((genlayerChain as any).id ?? 4221)
+  ENV_CHAIN_ID || String((genlayerChain as any).id ?? 4221)
 );
 export const GENLAYER_CHAIN_ID_HEX = `0x${GENLAYER_CHAIN_ID.toString(16)}`;
 
@@ -36,13 +43,13 @@ const DEFAULT_RPC =
 
 export const GENLAYER_NETWORK = {
   chainId: GENLAYER_CHAIN_ID_HEX,
-  chainName: process.env.NEXT_PUBLIC_GENLAYER_CHAIN_NAME || "GenLayer Testnet Bradbury",
+  chainName: ENV_CHAIN_NAME || "GenLayer Testnet Bradbury",
   nativeCurrency: {
-    name: process.env.NEXT_PUBLIC_GENLAYER_SYMBOL || "GEN",
-    symbol: process.env.NEXT_PUBLIC_GENLAYER_SYMBOL || "GEN",
+    name: ENV_SYMBOL || "GEN",
+    symbol: ENV_SYMBOL || "GEN",
     decimals: 18,
   },
-  rpcUrls: [process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || DEFAULT_RPC],
+  rpcUrls: [ENV_RPC || DEFAULT_RPC],
   blockExplorerUrls: ["https://explorer-bradbury.genlayer.com"],
 };
 
@@ -60,7 +67,7 @@ declare global {
 }
 
 export function getRpcUrl(): string {
-  return process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || DEFAULT_RPC;
+  return ENV_RPC || DEFAULT_RPC;
 }
 
 export function getContractAddress(): string {
@@ -182,8 +189,7 @@ export async function switchAccount(): Promise<string> {
  */
 export function createGenLayerClient(address?: string) {
   const config: any = { chain: genlayerChain };
-  const rpc = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL;
-  if (rpc) config.endpoint = rpc;
+  if (ENV_RPC) config.endpoint = ENV_RPC;
   if (address) config.account = address as `0x${string}`;
   try {
     return createClient(config);

@@ -1,5 +1,5 @@
 import { createClient } from "genlayer-js";
-import { genlayerChain } from "../genlayer/client";
+import { genlayerChain, getRpcUrl } from "../genlayer/client";
 import type { Debate, LeaderboardEntry, TransactionReceipt } from "./types";
 import {
   estimateWriteFeePreset,
@@ -52,9 +52,7 @@ class DebateArena {
     // checksums, so an EIP-55-checksummed string can fail viem validation.
     // A lowercase address has no checksum and is accepted on any chain.
     this.contractAddress = (contractAddress || "").trim().toLowerCase() as `0x${string}`;
-    const config: any = { chain: genlayerChain };
-    const rpc = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL;
-    if (rpc) config.endpoint = rpc;
+    const config: any = { chain: genlayerChain, endpoint: getRpcUrl() };
     if (address) config.account = address as `0x${string}`;
     this.client = createClient(config);
   }
