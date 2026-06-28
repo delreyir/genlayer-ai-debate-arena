@@ -12,6 +12,13 @@ natural-language input. That judgment is exactly what GenLayer's Intelligent Con
 
 > Built on GenLayer Testnet **Bradbury**.
 
+## 🔴 Live demo
+
+- **App:** https://genlayer-ai-debate-arena-frontend.vercel.app
+- **Contract (GenLayer Studionet):** `0x2a7E3d047fBeC5D4DE75665464A4fEcCF66b2453`
+
+> The hosted demo currently runs against GenLayer **Studionet** (instant, built-in faucet, real LLMs). For the persistent **Bradbury** deployment, follow [Deploy to Bradbury](#2-deploy-to-bradbury).
+
 ---
 
 ## Why GenLayer is central
