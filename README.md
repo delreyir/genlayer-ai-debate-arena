@@ -1,9 +1,9 @@
-# 🏛️ AI Debate Arena — on GenLayer
+# 🏛️ AI Debate Arena on GenLayer
 
 A decentralized debate platform where the **judge is a decentralized panel of AI validators**.
 
 Two debaters stake GEN and submit written arguments on a topic. A panel of [GenLayer](https://genlayer.com)
-validators — each running an LLM — independently evaluate which argument is stronger and reach **consensus on the
+validators each running an LLM independently evaluate which argument is stronger and reach **consensus on the
 verdict through the Equivalence Principle**. The winner takes the whole pot. No oracle, no human referee, no
 centralized moderator.
 
@@ -23,7 +23,7 @@ natural-language input. That judgment is exactly what GenLayer's Intelligent Con
 
 ## Why GenLayer is central
 
-The core of the app — deciding who won a debate — is a non-deterministic, subjective decision executed *inside the
+The core of the app deciding who won a debate is a non-deterministic, subjective decision executed *inside the
 contract*:
 
 ```python
@@ -41,17 +41,17 @@ verdict = gl.vm.run_nondet(leader_fn, validator_fn)
 Each validator independently runs an LLM, **normalizes (sanitizes) the output**, and consensus only requires
 agreement on the **declared winner** (one of three values) — not the free-text reasoning. This is what keeps
 validators from endlessly disagreeing on unstructured text.
-Remove GenLayer and there is no app — there is no other way to put an impartial, AI-driven verdict on-chain without a
+Remove GenLayer and there is no app there is no other way to put an impartial, AI-driven verdict on-chain without a
 trusted third party.
 
 ---
 
 ## How it works
 
-1. **Open a debate** — `create_debate(topic, stance, argument)` *(payable)*. Any GEN sent becomes the stake.
+1. **Open a debate** `create_debate(topic, stance, argument)` *(payable)*. Any GEN sent becomes the stake.
 2. **A challenger joins** — `join_debate(debate_id, argument)` *(payable)*. Must match the stake and argues the
    opposite stance.
-3. **AI consensus judges** — `judge_debate(debate_id)` runs the LLM equivalence-principle block. The winner is paid the
+3. **AI consensus judges** `judge_debate(debate_id)` runs the LLM equivalence-principle block. The winner is paid the
    pot (`gl.chain.Account(winner).emit_transfer(pot)`); a tie refunds both stakes. Wins are recorded on an on-chain
    leaderboard.
 
