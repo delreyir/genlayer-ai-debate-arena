@@ -51,7 +51,7 @@ class DebateArena {
     // Lowercase the address: GenLayer chains use EIP-1191 (chain-specific)
     // checksums, so an EIP-55-checksummed string can fail viem validation.
     // A lowercase address has no checksum and is accepted on any chain.
-    this.contractAddress = (contractAddress || "").toLowerCase() as `0x${string}`;
+    this.contractAddress = (contractAddress || "").trim().toLowerCase() as `0x${string}`;
     const config: any = { chain: genlayerChain };
     const rpc = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL;
     if (rpc) config.endpoint = rpc;

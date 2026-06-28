@@ -64,7 +64,7 @@ export function getRpcUrl(): string {
 }
 
 export function getContractAddress(): string {
-  return process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "";
+  return (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "").trim();
 }
 
 export function isMetaMaskInstalled(): boolean {
